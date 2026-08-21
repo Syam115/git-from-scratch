@@ -3,7 +3,7 @@ import java.security.MessageDigest;
 
 public class Main {
 
-    static String hashBlob(byte[] content) {
+    static String hashBlob(byte[] content) throws Exception {
         byte[] header = String.format("blob %d\0", content.length)
                 .getBytes();
 
@@ -11,7 +11,23 @@ public class Main {
         // TODO: MessageDigest sha1 = ...
         // TODO: return ...
 
-        return "";
+        byte[] blob = new byte[header.length + content.length];
+        System.arraycopy(header, 0, blob, 0, header.length);
+        System.arraycopy(content, 0, blob, header.length, content.length);
+
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+
+        byte[] hashBytes = messageDigest.digest(blob);
+        StringBuilder hexString = new StringBuilder();
+        for (byte b: hashBytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+
+        return hexString.toString();
     }
 
     public static void main(String[] args) throws Exception {
