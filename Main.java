@@ -1,33 +1,39 @@
 import java.io.*;
-import java.security.MessageDigest;
 
 public class Main {
 
-    static String hashBlob(byte[] content) throws Exception {
-        byte[] header = String.format("blob %d\0", content.length)
-                .getBytes();
-
-        // TODO: byte[] combined = ...
-        // TODO: MessageDigest sha1 = ...
-        // TODO: return ...
-
-        byte[] blob = new byte[header.length + content.length];
-        System.arraycopy(header, 0, blob, 0, header.length);
-        System.arraycopy(content, 0, blob, header.length, content.length);
-
-        MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-
-        byte[] hashBytes = messageDigest.digest(blob);
-        StringBuilder hexString = new StringBuilder();
-        for (byte b: hashBytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
+    static void hashBlob(String line) {
+        int nul = line.indexOf("\\0");
+        if (nul == -1) {
+            System.out.println("ERR no NUL separator");
+            return;
         }
 
-        return hexString.toString();
+        String header = line.substring(0, nul);
+        String body = line.substring(nul + 2);
+
+        String[] headerParts = header.split(" ");
+        if (headerParts.length != 2) {
+            System.out.println("ERR header doesn't have 2 parts");
+            return;
+        }
+
+        String type = headerParts[0];
+        int size = Integer.parseInt(headerParts[1]);
+
+        if (!type.equals("blob") && !type.equals("tree") && !type.equals("commit") && !type.equals("tag")) {
+            System.out.println("ERR unknown type branch");
+            return;
+        }
+
+        if (size != body.length()) {
+            System.out.println("ERR body length is not equal to size");
+            return;
+        }
+
+        System.out.println("type " + type);
+        System.out.println("size " + size);
+        System.out.println("body " + body.length());
     }
 
     public static void main(String[] args) throws Exception {
@@ -37,7 +43,7 @@ public class Main {
 
         String line;
         while ((line = sc.readLine()) != null) {
-            System.out.println(hashBlob(line.getBytes()));
+            hashBlob(line);
         }
     }
 }
